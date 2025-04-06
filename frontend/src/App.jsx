@@ -80,29 +80,6 @@ function App() {
         {file && <p>📎 Selected: {file.name}</p>}
       </div>
 
-      {/* Dropdown Menu */}
-      <label>
-        Select Analysis Type: &nbsp;
-        <select
-          value={analysisType}
-          onChange={(e) => setAnalysisType(e.target.value)}
-          style={{ 
-            padding: "0.4rem", 
-            marginBottom: "1rem", 
-            backgroundColor: "#2a2a2a",
-            color: "#fff",
-            border: "1px solid #555",
-            borderRadius: "4px" 
-          }}
-        >
-          <option value="basic">Basic</option>
-          <option value="detailed">Detailed</option>
-          <option value="custom">Custom</option>
-        </select>
-      </label>
-
-      <br />
-
       <button
         onClick={handleSubmit}
         disabled={!file || loading}
