@@ -80,6 +80,26 @@ function App() {
         {file && <p>📎 Selected: {file.name}</p>}
       </div>
 
+      {/* Analysis Type Dropdown */}
+      <label style={{ marginTop: "1rem", display: "block", color: "#fff" }}>
+        Select Analysis Type: 
+        <select
+          value={analysisType}
+          onChange={(e) => setAnalysisType(e.target.value)}
+          style={{
+            marginLeft: "0.5rem",
+            padding: "0.4rem",
+            backgroundColor: "#111",
+            color: "#fff",
+            border: "1px solid #3f51b5",
+            borderRadius: "4px"
+          }}
+        >
+          <option value="basic">Basic</option>
+          <option value="financial">Financial</option>
+        </select>
+      </label>
+
       <button
         onClick={handleSubmit}
         disabled={!file || loading}
@@ -104,7 +124,13 @@ function App() {
       )}
 
       {result && (
-        <div style={{ marginTop: "2rem", background: "#012", padding: "1.5rem", borderRadius: "8px", border: "2px solid #3f51b5" }}>
+        <div style={
+        { marginTop: "2rem",
+          background: "#012",
+          padding: "1.5rem",
+          borderRadius: "8px",
+          border: "2px solid #3f51b5" 
+        }}>
           <h3 style={{ color: "crimson" }}>📝 Summary:</h3>
           <p>{result.summary}</p>
 
@@ -115,9 +141,54 @@ function App() {
             ))}
           </ul>
 
+          {analysisType === "financial" && result.organizations?.length > 0 && (
+            <>
+              <h3 style={{ color: "crimson" }}>🏢 Organizations:</h3>
+              <ul>
+                {result.organizations.map((org, i) => (
+                  <li key={i}>{org}</li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {analysisType === "financial" && (
+            <>
+              <h3 style={{ color: "crimson" }}>💹 Financial Insight:</h3>
+              <p>
+                This document indicates a <strong style={{ color: "lightgreen" }}>{result.financial_status}</strong>.
+              </p>
+            </>
+          )}
+
           <h3 style={{ color: "crimson" }}>📊 Sentiment:</h3>
           <p><strong>Polarity:</strong> {result.sentiment.polarity}</p>
           <p><strong>Subjectivity:</strong> {result.sentiment.subjectivity}</p>
+
+          {result.contact_info ? (
+            (result.contact_info.emails.length > 0 || result.contact_info.phones.length > 0) ? (
+            <>
+              <h3 style={{ color: "crimson" }}>📞 Contact Information:</h3>
+              {result.contact_info.emails.length > 0 && (
+                <p><strong>Emails:</strong> {result.contact_info.emails.join(", ")}</p>
+              )}
+              {result.contact_info.phones.length > 0 && (
+                <p><strong>Phones:</strong> {result.contact_info.phones.join(", ")}</p>
+              )}
+            </>
+            ) : (
+                  <>
+                    <h3 style={{ color: "crimson" }}>📞 Contact Information:</h3>
+                    <p>No contact information found.</p>
+                  </>
+                )
+                ) : (
+                      <>
+                        <h3 style={{ color: "crimson" }}>📞 Contact Information:</h3>
+                        <p>No contact information found.</p>
+                      </>
+            )}
+
         </div>
       )}
     </div>
