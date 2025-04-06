@@ -1,22 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import axios from "axios";
-import ClipLoader from "react-spinners/ClipLoader"; // Spinner
+import { useDropzone } from "react-dropzone";
+import ClipLoader from "react-spinners/ClipLoader";
 
 function App() {
   const [file, setFile] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [analysisType, setAnalysisType] = useState("basic"); // dropdown selection
 
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-    setResult(null); // reset previous result
-  };
+  const onDrop = useCallback((acceptedFiles) => {
+    setFile(acceptedFiles[0]);
+    setResult(null);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.backgroundColor = "#000000";
+    document.body.style.margin = 0;
+  }, []);
+  
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "application/pdf": [],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
+      "text/plain": []
+    }
+  });
 
   const handleSubmit = async () => {
     if (!file) return;
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("type", analysisType); // Send selected dropdown value
     setLoading(true);
 
     try {
@@ -32,14 +50,59 @@ function App() {
   };
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "900px", margin: "auto", fontFamily: "sans-serif" }}>
+    <div style={{ padding: "2rem", maxWidth: "900px", margin: "auto", fontFamily: "sans-serif", backgroundColor: "black", color: "#fff" }}>
       <h2 style={{ color: "#3f51b5" }}>📄 Document Analyzer</h2>
-      <input
-        type="file"
-        accept=".pdf,.docx,.txt"
-        onChange={handleFileChange}
-        style={{ marginRight: "1rem", padding: "0.5rem" }}
-      />
+
+      {/* Drag and Drop Area */}
+      <div
+        {...getRootProps()}
+        style={{
+          border: "2px dashed #3f51b5",
+          padding: "2rem",
+          height: "45vh",
+          borderRadius: "8px",
+          textAlign: "center",
+          background: isDragActive ? "#1e1e1e" : "#1a1a1a",
+          marginBottom: "1rem",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          cursor: "pointer"
+        }}
+      >
+        <input {...getInputProps()} />
+        {isDragActive ? (
+          <p>Drop the file here...</p>
+        ) : (
+          <p>Drag and drop a file here, or click to select a file</p>
+        )}
+        {file && <p>📎 Selected: {file.name}</p>}
+      </div>
+
+      {/* Dropdown Menu */}
+      <label>
+        Select Analysis Type: &nbsp;
+        <select
+          value={analysisType}
+          onChange={(e) => setAnalysisType(e.target.value)}
+          style={{ 
+            padding: "0.4rem", 
+            marginBottom: "1rem", 
+            backgroundColor: "#2a2a2a",
+            color: "#fff",
+            border: "1px solid #555",
+            borderRadius: "4px" 
+          }}
+        >
+          <option value="basic">Basic</option>
+          <option value="detailed">Detailed</option>
+          <option value="custom">Custom</option>
+        </select>
+      </label>
+
+      <br />
+
       <button
         onClick={handleSubmit}
         disabled={!file || loading}
@@ -50,6 +113,7 @@ function App() {
           borderRadius: "5px",
           border: "none",
           cursor: loading ? "not-allowed" : "pointer",
+          marginTop: "1rem"
         }}
       >
         {loading ? "Analyzing..." : "Submit"}
@@ -63,18 +127,18 @@ function App() {
       )}
 
       {result && (
-        <div style={{ marginTop: "2rem", background: "#f4f6fa", padding: "1.5rem", borderRadius: "8px" }}>
-          <h3 style={{ color: "#2e7d32" }}>📝 Summary:</h3>
+        <div style={{ marginTop: "2rem", background: "#012", padding: "1.5rem", borderRadius: "8px", border: "2px solid #3f51b5" }}>
+          <h3 style={{ color: "crimson" }}>📝 Summary:</h3>
           <p>{result.summary}</p>
 
-          <h3 style={{ color: "#0288d1" }}>🏷️ Persons / Entities Detected:</h3>
+          <h3 style={{ color: "crimson" }}>🏷️ Persons / Entities Detected:</h3>
           <ul>
             {result.persons.map((p, i) => (
               <li key={i}>{p}</li>
             ))}
           </ul>
 
-          <h3 style={{ color: "#f57c00" }}>📊 Sentiment:</h3>
+          <h3 style={{ color: "crimson" }}>📊 Sentiment:</h3>
           <p><strong>Polarity:</strong> {result.sentiment.polarity}</p>
           <p><strong>Subjectivity:</strong> {result.sentiment.subjectivity}</p>
         </div>
