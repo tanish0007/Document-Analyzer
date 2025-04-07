@@ -1,7 +1,9 @@
 import re
 import spacy
-from transformers import pipeline
+import pandas as pd
+from io import StringIO
 from textblob import TextBlob
+from transformers import pipeline
 
 nlp = spacy.load("en_core_web_sm")
 summarizer = pipeline("summarization")
@@ -33,6 +35,69 @@ def detect_profit_or_loss(text):
     else:
         return "unknown"
 
+def extract_statistical_insights(text):
+    lines = [line.strip() for line in text.strip().splitlines() if re.search(r"\d", line)]
+    if len(lines) < 2:
+        return []
+
+    # Find the header line (assumed to be the one before first numeric line)
+    header_line = None
+    for i in range(len(lines)):
+        if re.search(r"^\d{4}", lines[i]):
+            header_line = lines[i - 1] if i > 0 else None
+            lines = lines[i:]
+            break
+
+    if not header_line:
+        return []
+
+    header = re.split(r"\s{2,}", header_line)
+    data_rows = []
+    for line in lines:
+        cols = re.split(r"\s{2,}", line)
+        if len(cols) == len(header):
+            data_rows.append(cols)
+
+    if not data_rows:
+        return []
+
+    # Create DataFrame
+    df = pd.DataFrame(data_rows, columns=header)
+
+    insights = []
+    time_col = df.columns[0]
+
+    for col in df.columns[1:]:
+        try:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+            if df[col].isna().all():
+                continue
+
+            trend = df[col].diff()
+            increase = trend.gt(0).sum()
+            decrease = trend.lt(0).sum()
+            constant = trend.eq(0).sum()
+
+            if increase and not decrease:
+                insights.append(f"{col} increased consistently.")
+            elif decrease and not increase:
+                insights.append(f"{col} decreased consistently.")
+            elif increase and decrease:
+                insights.append(f"{col} fluctuated with {increase} increases and {decrease} decreases.")
+            elif constant:
+                insights.append(f"{col} remained constant.")
+
+            max_val = df[col].max()
+            max_year = df.loc[df[col].idxmax(), time_col]
+            min_val = df[col].min()
+            min_year = df.loc[df[col].idxmin(), time_col]
+            insights.append(f"{col} was highest in {max_year} ({max_val}) and lowest in {min_year} ({min_val}).")
+        except Exception:
+            continue
+
+    return insights
+
+
 def analyze_document(text: str):
     if len(text.strip()) == 0:
         return {
@@ -41,7 +106,8 @@ def analyze_document(text: str):
             "organizations": [], 
             "contact_info": {}, 
             "sentiment": {}, 
-            "financial_status": "unknown"
+            "statistical_insights": [],
+            "financial_status": ""
         }
 
     # Summarization
@@ -61,6 +127,9 @@ def analyze_document(text: str):
     # Contact Info
     contact_info = extract_contact_info(text)
 
+    # Statistical Insights
+    stats = extract_statistical_insights(text)
+
     return {
         "summary": summary,
         "persons": persons,
@@ -70,5 +139,6 @@ def analyze_document(text: str):
             "polarity": sentiment.polarity,
             "subjectivity": sentiment.subjectivity
         },
-        "financial_status": fin_status
+        "financial_status": fin_status,
+        "statistical_insights": stats
     }

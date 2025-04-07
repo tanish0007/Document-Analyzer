@@ -42,6 +42,7 @@ function App() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setResult(res.data);
+      console.log(res.data);
     } catch (err) {
       console.error("Upload failed", err);
     } finally {
@@ -141,6 +142,28 @@ function App() {
             ))}
           </ul>
 
+          {/* {result.statistical_insights?.length > 0 && (
+            <>
+              <h3 style={{ color: "crimson" }}>📈 Statistical Insights:</h3>
+              <ul>
+                {result.statistical_insights.map((insight, i) => (
+                  <li key={i}>{insight}</li>
+                ))}
+              </ul>
+            </>
+          )} */}
+
+          {analysisType === "financial" && (
+            <>
+            <h3 style={{ color: "crimson" }}>📈 Statistical Insights:</h3>
+              <ul>
+                {result.statistical_insights.map((insight, i) => (
+                  <li key={i}>{insight}</li>
+                ))}
+              </ul>
+            </>
+          )}
+
           {analysisType === "financial" && result.organizations?.length > 0 && (
             <>
               <h3 style={{ color: "crimson" }}>🏢 Organizations:</h3>
@@ -160,6 +183,7 @@ function App() {
               </p>
             </>
           )}
+
 
           <h3 style={{ color: "crimson" }}>📊 Sentiment:</h3>
           <p><strong>Polarity:</strong> {result.sentiment.polarity}</p>
